@@ -1,13 +1,11 @@
 #include <iostream>
-#include <charconv>
-
+#include <any>
 #include <condition_variable>
 #include <thread>
-#include <unistd.h>
 #include <vector>
 #include <tuple>
 #include <string>
-
+#include <shared_mutex>
 
 struct Person {
     std::string name;
@@ -54,15 +52,124 @@ void MapObj2() {
 
 }
 
-void anyValue(){
-//    optional<T>——持有 T 或什么都不持有
-//    variant<T,U>——持有 T 或 U
-//    any——持有任意类型
+void anyValue() {
+    std::optional<int> maybeNumber;
+
+    // 初始状态，没有值
+    if (!maybeNumber) {
+        std::cout << "maybeNumber is empty" << std::endl;
+    }
+
+    // 赋值
+    maybeNumber = 42;
+
+    // 检查并使用值
+    if (maybeNumber) {
+        std::cout << "maybeNumber contains: " << maybeNumber.value() << std::endl;
+    }
+
+    // 重置为无值状态
+    maybeNumber.reset();
+
+    if (!maybeNumber) {
+        std::cout << "maybeNumber is now empty again" << std::endl;
+    }
+
+
+    std::variant<int, std::string> myVariant;
+
+    myVariant = 10;
+    std::cout << "Integer value: " << std::get<int>(myVariant) << std::endl;
+
+    myVariant = "Hello, Variant!";
+    std::cout << "String value: " << std::get<std::string>(myVariant) << std::endl;
+
+
+    std::any anything;
+
+    anything = 42;
+    std::cout << "Integer value: " << std::any_cast<int>(anything) << std::endl;
+
+    anything = std::string("Hello, Any!");
+    std::cout << "String value: " << std::any_cast<std::string>(anything) << std::endl;
+
+    // 尝试错误类型的转换将抛出异常
+    try {
+        std::cout << std::any_cast<float>(anything) << std::endl;
+    } catch (const std::bad_any_cast &e) {
+        std::cout << "Caught exception: " << e.what() << std::endl;
+    }
+}
+
+void mutex() {
+    std::shared_mutex mtx;
+
+    // 创建多个读线程
+    for (int i = 0; i < 5; ++i) {
+        std::thread t([&]() {
+            // 获取读锁
+            std::shared_lock<std::shared_mutex> lock(mtx);
+            std::cout << "Reader thread " << i << " is reading." << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        });
+        t.detach();
+    }
+
+    // 创建一个写线程
+    std::thread t_writer([&]() {
+        // 获取写锁
+        std::unique_lock<std::shared_mutex> lock(mtx);
+        std::cout << "Writer thread is writing." << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(2));
+    });
+    t_writer.join();
 
 }
 
-int main() {
+std::shared_mutex mtx;
+int cnt = 0;
 
+void Reader(int id) {
+    for (int i = 0; i < 5; ++i) {
+        std::shared_lock<std::shared_mutex> lock(mtx);
+        std::cout << "Reader " << id << ": cnt = " << cnt << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+}
+
+void Writer(int id) {
+    for (int i = 0; i < 5; ++i) {
+        std::unique_lock<std::shared_mutex> lock(mtx);
+        ++cnt;
+        std::cout << "Writer " << id << ": cnt = " << cnt << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    }
+}
+
+void threadMuti() {
+    std::vector<std::thread> readers;
+    for (int i = 0; i < 5; ++i) {
+        readers.push_back(std::thread(Reader, i + 1));
+    }
+
+    std::vector<std::thread> writers;
+    for (int i = 0; i < 2; ++i) {
+        writers.push_back(std::thread(Writer, i + 1));
+    }
+
+    for (auto &t: readers) {
+        t.join();
+    }
+
+    for (auto &t: writers) {
+        t.join();
+    }
+}
+
+
+int main() {
+    threadMuti();
+//    mutex();
     anyValue();
     MapObj();
     MapObj2();
