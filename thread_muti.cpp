@@ -1,4 +1,5 @@
 #include <iostream>
+<<<<<<< HEAD:a.cpp
 #include <any>
 #include <condition_variable>
 #include <thread>
@@ -6,6 +7,16 @@
 #include <tuple>
 #include <string>
 #include <shared_mutex>
+=======
+#include <condition_variable>
+#include <thread>
+#include <tuple>
+#include <string>
+#include <shared_mutex>
+#include <algorithm>
+#include "math_functions.h"
+#include <variant>
+>>>>>>> 36e1ad0 (feat: add thread cpp):thread_muti.cpp
 
 struct Person {
     std::string name;
@@ -53,6 +64,7 @@ void MapObj2() {
 }
 
 void anyValue() {
+<<<<<<< HEAD:a.cpp
     std::optional<int> maybeNumber;
 
     // 初始状态，没有值
@@ -133,19 +145,59 @@ void Reader(int id) {
     for (int i = 0; i < 5; ++i) {
         std::shared_lock<std::shared_mutex> lock(mtx);
         std::cout << "Reader " << id << ": cnt = " << cnt << std::endl;
+=======
+//    optional<T>——持有 T 或什么都不持有
+//    variant<T,U>——持有 T 或 U
+//    any——持有任意类型
+    union US {
+        int i;
+        char *p;
+    };
+    US u{};
+    int x = u.i;    // 正确：当且仅当 u 持有整数
+    char *p = u.p;  // 正确：当且仅当 u 持有指针
+    std::cout << x << "," << &p << std::endl;
+
+    using var_t = std::variant<int, long, double, std::string>; // variant 类型
+
+
+}
+
+
+std::shared_mutex mySharedMutex;
+int sharedData = 0;
+
+void writerThread() {
+    for (int i = 0; i < 5; ++i) {
+        {
+            std::unique_lock<std::shared_mutex> lock(mySharedMutex);
+            sharedData += 10;
+            std::cout << "Writer thread: Incremented sharedData to " << sharedData << std::endl;
+        }
+>>>>>>> 36e1ad0 (feat: add thread cpp):thread_muti.cpp
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
+<<<<<<< HEAD:a.cpp
 void Writer(int id) {
     for (int i = 0; i < 5; ++i) {
         std::unique_lock<std::shared_mutex> lock(mtx);
         ++cnt;
         std::cout << "Writer " << id << ": cnt = " << cnt << std::endl;
+=======
+void readerThread(int id) {
+    for (int i = 0; i < 3; ++i) {
+        {
+            std::shared_lock<std::shared_mutex> lock(mySharedMutex);
+            std::cout << "Reader thread " << id << ": Read sharedData as " << sharedData << std::endl;
+        }
+>>>>>>> 36e1ad0 (feat: add thread cpp):thread_muti.cpp
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
     }
 }
 
+<<<<<<< HEAD:a.cpp
 void threadMuti() {
     std::vector<std::thread> readers;
     for (int i = 0; i < 5; ++i) {
@@ -164,12 +216,28 @@ void threadMuti() {
     for (auto &t: writers) {
         t.join();
     }
+=======
+int locksMutex() {
+    std::thread writer(writerThread);
+    std::thread reader1(readerThread, 1);
+    std::thread reader2(readerThread, 2);
+
+    writer.join();
+    reader1.join();
+    reader2.join();
+
+    return 0;
+>>>>>>> 36e1ad0 (feat: add thread cpp):thread_muti.cpp
 }
 
 
 int main() {
+<<<<<<< HEAD:a.cpp
     threadMuti();
 //    mutex();
+=======
+    locksMutex();
+>>>>>>> 36e1ad0 (feat: add thread cpp):thread_muti.cpp
     anyValue();
     MapObj();
     MapObj2();
